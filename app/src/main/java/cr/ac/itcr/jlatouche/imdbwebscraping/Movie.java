@@ -8,18 +8,18 @@ import android.graphics.Bitmap;
 
 public class Movie {
 
-    private short id;
+    private int id;
     private String title;
-    private short year;
+    private int year;
     private float rating;
-    private short metascore;
+    private int metascore;
     private Bitmap cover;
 
-    public short getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(short id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -31,11 +31,11 @@ public class Movie {
         this.title = title;
     }
 
-    public short getYear() {
+    public int getYear() {
         return year;
     }
 
-    public void setYear(short year) {
+    public void setYear(int year) {
         this.year = year;
     }
 
@@ -47,11 +47,11 @@ public class Movie {
         this.rating = rating;
     }
 
-    public short getMetascore() {
+    public int getMetascore() {
         return metascore;
     }
 
-    public void setMetascore(short metascore) {
+    public void setMetascore(int metascore) {
         this.metascore = metascore;
     }
 
