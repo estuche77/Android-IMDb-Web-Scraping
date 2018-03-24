@@ -55,21 +55,22 @@ public class MainActivity extends AppCompatActivity {
 
             Elements titlesParagraph = document.select("div.lister-item-content h3 a");
             Elements ratingsBars = document.select("div.lister-item-content div div strong");
-            Elements metaScoresNumber = document.select("span.metascore.favorable");
+            Elements metaScoresNumber = document.select("span.metascore");
             Elements coversSources = document.select("div .lister-item-image a img");
 
-            for (int i = 0; i < titlesParagraph.size(); i++) {
+            for (int i = 0; i < 50; i++) {
                 Movie movie = new Movie();
 
                 String title = titlesParagraph.get(i).text();
                 float rating = Float.parseFloat(ratingsBars.get(i).text());
-                //int metaScore = Integer.parseInt(metaScoresNumber.get(i).text());
+                Log.d("MEH", "onCreate: " + metaScoresNumber.get(i).text());
+                int metaScore = Integer.parseInt(metaScoresNumber.get(i).text());
 
                 Log.d("URL", "onCreate: " + coversSources.get(i).text());
 
                 movie.setTitle(title);
                 movie.setRating(rating);
-                movie.setMetaScore(6);
+                movie.setMetaScore(metaScore);
                 movie.setCoverAddress(coversSources.get(i).attr("loadlate"));
 
                 movies.add(movie);
@@ -80,22 +81,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-
-        for (int i = 0; i < movies.size(); i++) {
-            View view = GetViewByPosition(i);
-            //Log.d("HOLA", "onCreate: " + view.toString());
-            //
-        }
-    }
-
-    public View GetViewByPosition(int position) {
-        int firstPosition = moviesView.getFirstVisiblePosition();
-        int lastPosition = moviesView.getLastVisiblePosition();
-
-        if ((position < firstPosition) || (position > lastPosition))
-            return null;
-
-        return moviesView.getChildAt(position - firstPosition);
     }
 
     public class HttpGetRequest extends AsyncTask<String, Void, String> {
