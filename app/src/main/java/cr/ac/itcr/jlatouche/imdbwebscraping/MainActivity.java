@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.GridLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.RatingBar;
@@ -26,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -36,33 +36,27 @@ public class MainActivity extends AppCompatActivity {
     private final static int columnCount = 3;
 
     private final ArrayList<Movie> movies = new ArrayList<>();
+    private GridView moviesView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        GridView moviesView = findViewById(R.id.moviesView);
-        moviesView.setNumColumns(columnCount);
+        moviesView = findViewById(R.id.moviesView);
 
+        moviesView.setNumColumns(columnCount);
         moviesView.setAdapter(new MoviesAdapter());
 
         try {
             String html = new HttpGetRequest().execute(link).get();
-
-            Log.d("HTML", "onCreate: " + html);
 
             Document document = Jsoup.parse(html);
 
             Elements titlesParagraph = document.select("div.lister-item-content h3 a");
             Elements ratingsBars = document.select("div.lister-item-content div div strong");
             Elements metaScoresNumber = document.select("span.metascore.favorable");
-            Elements coversSources = document.select("div.lister-item-image a img");
-
-            for (Element e: metaScoresNumber) {
-                Log.d("Meta", "onCreate: " + e.text());
-                Log.d("size", "onCreate: " + String.valueOf(metaScoresNumber.size()));
-            }
+            Elements coversSources = document.select("div .lister-item-image a img");
 
             for (int i = 0; i < titlesParagraph.size(); i++) {
                 Movie movie = new Movie();
@@ -71,9 +65,12 @@ public class MainActivity extends AppCompatActivity {
                 float rating = Float.parseFloat(ratingsBars.get(i).text());
                 //int metaScore = Integer.parseInt(metaScoresNumber.get(i).text());
 
+                Log.d("URL", "onCreate: " + coversSources.get(i).text());
+
                 movie.setTitle(title);
                 movie.setRating(rating);
-                movie.setMetascore(6);
+                movie.setMetaScore(6);
+                movie.setCoverAddress(coversSources.get(i).attr("loadlate"));
 
                 movies.add(movie);
             }
@@ -83,50 +80,28 @@ public class MainActivity extends AppCompatActivity {
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-    }
 
-    public class GetBitmap extends AsyncTask<String, Void, Bitmap> {
-        public static final String REQUEST_METHOD = "GET";
-        public static final int READ_TIMEOUT = 15000;
-        public static final int CONNECTION_TIMEOUT = 15000;
-
-        @Override
-        protected Bitmap doInBackground(String... urls){
-            String stringUrl = urls[0];
-            Bitmap data;
-            String inputLine;
-
-            try {
-                //Create a URL object holding our url
-                URL myUrl = new URL(stringUrl);
-
-                //Create a connection
-                HttpURLConnection connection =(HttpURLConnection)
-                        myUrl.openConnection();
-                //Set methods and timeouts
-                connection.setRequestMethod(REQUEST_METHOD);
-                connection.setReadTimeout(READ_TIMEOUT);
-                connection.setConnectTimeout(CONNECTION_TIMEOUT);
-
-                connection.setDoInput(true);
-                connection.connect();
-                InputStream input = connection.getInputStream();
-                data = BitmapFactory.decodeStream(input);
-            } catch (IOException e) {
-                e.printStackTrace();
-                data = null;
-            }
-
-            return data;
-
-
+        for (int i = 0; i < movies.size(); i++) {
+            View view = GetViewByPosition(i);
+            //Log.d("HOLA", "onCreate: " + view.toString());
+            //
         }
     }
 
+    public View GetViewByPosition(int position) {
+        int firstPosition = moviesView.getFirstVisiblePosition();
+        int lastPosition = moviesView.getLastVisiblePosition();
+
+        if ((position < firstPosition) || (position > lastPosition))
+            return null;
+
+        return moviesView.getChildAt(position - firstPosition);
+    }
+
     public class HttpGetRequest extends AsyncTask<String, Void, String> {
-        public static final String REQUEST_METHOD = "GET";
-        public static final int READ_TIMEOUT = 15000;
-        public static final int CONNECTION_TIMEOUT = 15000;
+        private static final String REQUEST_METHOD = "GET";
+        private static final int READ_TIMEOUT = 15000;
+        private static final int CONNECTION_TIMEOUT = 15000;
 
         @Override
         protected String doInBackground(String... urls){
@@ -178,6 +153,51 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public class HttpGetBitmap extends AsyncTask<Integer, Void, Bitmap> {
+        private static final String REQUEST_METHOD = "GET";
+        private static final int READ_TIMEOUT = 15000;
+        private static final int CONNECTION_TIMEOUT = 15000;
+
+        @Override
+        protected Bitmap doInBackground(Integer... index){
+
+            int i = index[0];
+            Bitmap cover;
+
+            Movie movie = movies.get(i);
+            String address = movie.getCoverAddress();
+
+            try {
+
+                //Create a URL object holding our url
+                URL myUrl = new URL(address);
+
+                //Create a connection
+                HttpURLConnection connection =(HttpURLConnection)
+                        myUrl.openConnection();
+
+                //Set methods and timeouts
+                connection.setRequestMethod(REQUEST_METHOD);
+                connection.setReadTimeout(READ_TIMEOUT);
+                connection.setConnectTimeout(CONNECTION_TIMEOUT);
+
+                //Connect to our url
+                connection.setDoInput(true);
+                connection.connect();
+
+                //Create a new InputStream
+                InputStream input = connection.getInputStream();
+                cover = BitmapFactory.decodeStream(input);
+
+            }
+            catch(IOException e){
+                e.printStackTrace();
+                cover = null;
+            }
+            return cover;
+        }
+    }
+
     public class MoviesAdapter extends BaseAdapter {
 
         public MoviesAdapter() {
@@ -211,9 +231,20 @@ public class MainActivity extends AppCompatActivity {
             RatingBar ratingBar = view.findViewById(R.id.ratingBar);
             TextView metaScoreView = view.findViewById(R.id.metaScoreTextView);
 
+            HttpGetBitmap request = new HttpGetBitmap();
+            Bitmap coverImage = null;
+            try {
+                coverImage = request.execute(i).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+            coverView.setImageBitmap(coverImage);
+
             titleView.setText(movies.get(i).getTitle());
             ratingBar.setRating(movies.get(i).getRating() / 2);
-            metaScoreView.setText(String.valueOf(movies.get(i).getMetascore()));
+            metaScoreView.setText(String.valueOf(movies.get(i).getMetaScore()));
 
             return view;
         }

@@ -8,20 +8,11 @@ import android.graphics.Bitmap;
 
 public class Movie {
 
-    private int id;
     private String title;
-    private int year;
     private float rating;
-    private int metascore;
+    private int metaScore;
     private Bitmap cover;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
+    private String coverAddress;
 
     public String getTitle() {
         return title;
@@ -29,14 +20,6 @@ public class Movie {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
     }
 
     public float getRating() {
@@ -47,12 +30,12 @@ public class Movie {
         this.rating = rating;
     }
 
-    public int getMetascore() {
-        return metascore;
+    public int getMetaScore() {
+        return metaScore;
     }
 
-    public void setMetascore(int metascore) {
-        this.metascore = metascore;
+    public void setMetaScore(int metaScore) {
+        this.metaScore = metaScore;
     }
 
     public Bitmap getCover() {
@@ -62,4 +45,8 @@ public class Movie {
     public void setCover(Bitmap cover) {
         this.cover = cover;
     }
+
+    public String getCoverAddress() { return coverAddress; }
+
+    public void setCoverAddress(String coverAddress) { this.coverAddress = coverAddress; }
 }
